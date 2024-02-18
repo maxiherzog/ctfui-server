@@ -5,10 +5,8 @@ const Express = require('express')();
 const Http = require('http').Server(Express);
 const Socketio = require('socket.io')(Http, {
     cors: {
-        origin: 'http://localhost:8080',
-        methods: ['GET', 'POST'],
-        allowedHeaders: ["ctf-header-jo"],
-        credentials: true
+        origin: "https://maxiherzog.github.io",
+        methods: ["GET", "POST"]
     }
 });
 
