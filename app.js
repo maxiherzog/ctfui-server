@@ -14,10 +14,7 @@ const Socketio = require('socket.io')(Http, {
 
 // string: buchstabe, list of socket_ids that represent players, status: -100 red, 0 neutral, 100 blue
 
-var ticketDecay = 1;
 const buchstaben = ["A", "B", "C", "D", "E", "F", "G", "H", "I"];
-
-
 var settings = {
     flagAmount: 3,
     startingTickets: 100,
@@ -26,8 +23,6 @@ var settings = {
     ticketDecrement: 1,
     ticketDecay: 1
 };
-
-
 
 var tickets = [100, 100]; // TODO
 var disconnected_ids = [];
@@ -134,8 +129,6 @@ Socketio.on('connection', socket => {
             // assign random flag to player
             flags[flag_before].players.push(socket.id);
         }
-
-        console.log(flags);
         socket.emit("flags", flags);
         socket.broadcast.emit("flags", flags);
         // console.log(flags)
@@ -156,14 +149,33 @@ Socketio.on('connection', socket => {
         // check if >= 2 players are ready
         var readies = flags.filter(flag => flag.ready).length;
         if (gamestate==="lobby" && readies >= 2) {
-            // start game
-            console.log("start game");
-            gamestate = "running";
-            // restart game loop
-            clearInterval(gameLoop);
-            gameLoop = setInterval(gameLoopFun, 5000);
-            socket.emit("gamestate", gamestate);
-            socket.broadcast.emit("gamestate", gamestate);
+            var countdown = 5;
+            var countdownInterval = setInterval(() => {
+                // check if players are still ready
+                var readies = flags.filter(flag => flag.ready).length;
+                if (readies < 2) {
+                    countdown = 5;
+                    clearInterval(countdownInterval);
+                }
+                countdown--;
+                socket.emit("countdown", countdown);
+                socket.broadcast.emit("countdown", countdown);
+                // start game
+                if (countdown <= 0) {
+                    console.log("start game");
+                    gamestate = "running";
+                    // restart game loop
+                    clearInterval(gameLoop);
+                    gameLoop = setInterval(gameLoopFun, 5000);
+                    socket.emit("gamestate", gamestate);
+                    socket.broadcast.emit("gamestate", gamestate);
+                    countdown = 5;
+                    clearInterval(countdownInterval);
+                    
+                }
+            }, 1000);
+
+            
         }
 
     });
@@ -184,8 +196,6 @@ Socketio.on('connection', socket => {
                 break;
             }
         }
-        console.log(flags)
-
         socket.emit("flags", flags);
         
     });
@@ -228,7 +238,6 @@ Socketio.on('connection', socket => {
             }
         }
 
-        console.log(flags)
         tickets = [settings.startingTickets, settings.startingTickets];
         // ticketDecay = settings.ticketDecay;
 
